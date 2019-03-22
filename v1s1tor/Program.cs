@@ -21,6 +21,7 @@ namespace v1s1tor
         static string targ = "pcgaming";
         static string targ2 = "porsche";
         static string threadnum = "1";
+        static int fnum = 0;
         static bool unrestricted = false;
         static bool followday = false;
 
@@ -54,7 +55,9 @@ namespace v1s1tor
 
         static void Menu()
         {
+            Console.ReadLine();
             Console.Clear();
+            
             Console.WriteLine("Menu");
             Console.WriteLine("1> Start Bot");
             Console.WriteLine("2> Set Threads");
@@ -156,7 +159,7 @@ namespace v1s1tor
         static IWebDriver Login(string username, string password)
         {
             
-            IWebDriver driver = new ChromeDriver(@"C:\Users\poseidon\Downloads", options);
+            IWebDriver driver = new ChromeDriver(@"C:\Users\qianlong\Downloads", options);
             driver.Navigate().GoToUrl("https://www.instagram.com/accounts/login/");
             WaitForPageLoad(driver);
             Thread.Sleep(2000);
@@ -218,31 +221,33 @@ namespace v1s1tor
             }
             Thread.Sleep(6000);
             i = 0;
-            
-                while (true)
-                {
+
+            driver.Manage().Window.Size = new System.Drawing.Size(333, 969);
+            while (true)
+            {
                 try
                 {
                     Actions builder = new Actions(driver);
-                    
-                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'HVWg4')]")))
+
+                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'wo9IH')]")))
                     {    //HoLwm
-                        Thread.Sleep(30000);
                         if (e.FindElement(By.ClassName("sqdOP")).Text == "Follow")
                         {
+                            Thread.Sleep(30000);
                             Console.WriteLine("Followed " + e.FindElement(By.ClassName("FPmhX")).Text + ".");
-                            builder.MoveToElement(e.FindElement(By.ClassName("sqdOP"))).Click().Perform();
-                            builder.SendKeys(Keys.ArrowDown).Perform();
+                            fnum++;
+                            Console.WriteLine(fnum);
+                            if (!File.Exists("following.txt"))
+                                File.Create("following.txt").Close();
+                            File.WriteAllText("following.txt",File.ReadAllText("following.txt") + "\n" + e.FindElement(By.ClassName("FPmhX")).Text + "|" + DateTime.Now);
+
+                            builder.Click(e.FindElement(By.ClassName("sqdOP"))).Perform();
 
                             break;
 
                         }
-                        IJavaScriptExecutor js;
-                            js = (IJavaScriptExecutor)driver;
-                        Thread.Sleep(5000);
-                        //Console.WriteLine("Deleting " + driver.FindElement(By.ClassName("FPmhX").FindElement(By.ClassName("HVWg4").Text);
-                        //js.ExecuteScript("document.getElementsByClassName('HVWg4')[0].remove();");
-                        
+                        Thread.Sleep(500);
+
                     }
                 }
                 catch (Exception ex)
@@ -251,9 +256,8 @@ namespace v1s1tor
                 }
 
             }
-            
 
-            
+
         }
         #endregion
         #region UnFollowVoid
@@ -288,30 +292,48 @@ namespace v1s1tor
             }
             Thread.Sleep(6000);
             i = 0;
-
+            driver.Manage().Window.Size = new System.Drawing.Size(333, 969);
             while (true)
             {
                 try
                 {
                     Actions builder = new Actions(driver);
 
-                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'HVWg4')]")))
+                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'wo9IH')]")))
                     {    //HoLwm
-                        if (e.FindElement(By.ClassName("sqdOP")).Text == "Following")
+                        bool flag = false;
+                        foreach(string s in File.ReadAllText("following.txt").Split(
+    new[] { "\r\n", "\r", "\n" },
+    StringSplitOptions.None))
                         {
-                            Thread.Sleep(10000);
-                            Console.WriteLine("UnFollowed " + e.FindElement(By.ClassName("FPmhX")).Text + ".");
-                            builder.MoveToElement(e.FindElement(By.ClassName("sqdOP"))).Click().Perform();
-                            builder.SendKeys(Keys.ArrowDown).Perform();
-                            Thread.Sleep(4500);
-
-                            builder.MoveToElement(driver.FindElement(By.ClassName("aOOlW"))).Click().Perform();
-                            break;
-
+                            
+                            DateTime myDate = DateTime.Parse(s.Split(
+    new[] { "\n" },
+    StringSplitOptions.None)[0].Split('|')[1]);
+                            int result = DateTime.Compare(myDate, DateTime.Now.AddDays(-2));
+                            if (result < 0)
+                            {
+                                flag = true;
+                            }
                         }
+                        if (flag != true)
+                            if (e.FindElement(By.ClassName("sqdOP")).Text == "Following")
+                            {
+                                Thread.Sleep(10000);
+                                Console.WriteLine("UnFollowed " + e.FindElement(By.ClassName("FPmhX")).Text + ".");
+                                builder.Click(e.FindElement(By.ClassName("sqdOP"))).Perform();
+
+                                Thread.Sleep(4500);
+
+                                driver.FindElement(By.ClassName("aOOlW")).Click();
+                                Thread.Sleep(2000);
+
+                                break;
+
+                            }
+                            else
+                                Console.WriteLine("Unable to unfollow " + e.FindElement(By.ClassName("FPmhX")).Text + "Due to following them less than two days ago.");
                         Thread.Sleep(500);
-                        //Console.WriteLine("Deleting " + driver.FindElement(By.ClassName("FPmhX").FindElement(By.ClassName("HVWg4").Text);
-                        //js.ExecuteScript("document.getElementsByClassName('HVWg4')[0].remove();");
 
                     }
                 }
