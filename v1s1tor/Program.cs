@@ -159,7 +159,7 @@ namespace v1s1tor
         static IWebDriver Login(string username, string password)
         {
             
-            IWebDriver driver = new ChromeDriver(@"C:\Users\qianlong\Downloads", options);
+            IWebDriver driver = new ChromeDriver(@"C:\Users\poseidon\Downloads", options);
             driver.Navigate().GoToUrl("https://www.instagram.com/accounts/login/");
             WaitForPageLoad(driver);
             Thread.Sleep(2000);
@@ -242,8 +242,7 @@ namespace v1s1tor
                             File.WriteAllText("following.txt",File.ReadAllText("following.txt") + "\n" + e.FindElement(By.ClassName("FPmhX")).Text + "|" + DateTime.Now);
 
                             builder.Click(e.FindElement(By.ClassName("sqdOP"))).Perform();
-
-                            break;
+                            
 
                         }
                         Thread.Sleep(500);
@@ -298,41 +297,67 @@ namespace v1s1tor
                 try
                 {
                     Actions builder = new Actions(driver);
-
+                    bool flag = false;
                     foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'wo9IH')]")))
                     {    //HoLwm
-                        bool flag = false;
-                        foreach(string s in File.ReadAllText("following.txt").Split(
-    new[] { "\r\n", "\r", "\n" },
+                        int i1 = 0;
+                        foreach (string s in File.ReadAllText("following.txt").Split(
+    new[] { "\n" },
     StringSplitOptions.None))
                         {
                             
-                            DateTime myDate = DateTime.Parse(s.Split(
-    new[] { "\n" },
-    StringSplitOptions.None)[0].Split('|')[1]);
+                            DateTime myDate = DateTime.Parse(s.Split(new[] { "\n" },StringSplitOptions.None)[0].Split('|')[1]);
+                            
+                            Console.WriteLine(myDate);
                             int result = DateTime.Compare(myDate, DateTime.Now.AddDays(-2));
-                            if (result < 0)
+                            Console.WriteLine(result);
+                            if (result ==-1 && s.Split('|')[0] == e.FindElement(By.ClassName("FPmhX")).Text)
                             {
                                 flag = true;
+                                break;
                             }
+                            
                         }
-                        if (flag != true)
+                        if (flag == true)
                             if (e.FindElement(By.ClassName("sqdOP")).Text == "Following")
                             {
                                 Thread.Sleep(10000);
                                 Console.WriteLine("UnFollowed " + e.FindElement(By.ClassName("FPmhX")).Text + ".");
-                                builder.Click(e.FindElement(By.ClassName("sqdOP"))).Perform();
+                                (e.FindElement(By.ClassName("sqdOP"))).Click();
 
                                 Thread.Sleep(4500);
 
                                 driver.FindElement(By.ClassName("aOOlW")).Click();
                                 Thread.Sleep(2000);
+                                
 
-                                break;
+                                string tempFile = Path.GetTempFileName();
+
+                                using (var sr = new StreamReader("following.txt"))
+                                using (var sw = new StreamWriter(tempFile))
+                                {
+                                    string line;
+
+                                    while ((line = sr.ReadLine()) != null)
+                                    {
+                                        if (!line.Contains(e.FindElement(By.ClassName("FPmhX")).Text))
+                                            sw.Write("\n"+line);
+                                    }
+                                }
+
+                                File.Delete("following.txt");
+                                File.Move(tempFile, "following.txt");
+
+
 
                             }
-                            else
-                                Console.WriteLine("Unable to unfollow " + e.FindElement(By.ClassName("FPmhX")).Text + "Due to following them less than two days ago.");
+
+                        if (flag != true)
+                        {
+                            Console.WriteLine("Unable to unfollow " + e.FindElement(By.ClassName("FPmhX")).Text + "Due to following them less than two days ago.");
+                            flag = false;
+                        }
+                        i1++;
                         Thread.Sleep(500);
 
                     }
