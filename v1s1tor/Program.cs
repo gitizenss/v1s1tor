@@ -13,12 +13,16 @@ using System.IO;
 namespace v1s1tor
 {
     class Program
-    {
+    {//TODO: new thread that handles when there is a new day and switching the unfollowing and following 
+        //
         static ChromeOptions options = new ChromeOptions();
         static string username = "godlyrigs";
         static string username2 = "zen.obi";
         static string targ = "pcgaming";
         static string targ2 = "porsche";
+        static string threadnum = "1";
+        static bool unrestricted = false;
+        static bool followday = false;
 
         #region log
         static string password = "Anime1243";
@@ -53,31 +57,15 @@ namespace v1s1tor
             Console.Clear();
             Console.WriteLine("Menu");
             Console.WriteLine("1> Start Bot");
-            Console.WriteLine("2> Check Calendar");
+            Console.WriteLine("2> Set Threads");
             Console.WriteLine("3> Check Daily Stats");
             Console.WriteLine("4> Unrestricted Follow Bot");
             Console.WriteLine("5> Unrestricted Unfollow Bot");
-            string input = Console.ReadLine();
-            Thread thread = new Thread(BsThread);
-            #region FollowBot
-            if (input == "1")
-            {
-                Console.WriteLine("How many threads?");
-                string threadnum = Console.ReadLine();
-                if (threadnum == "2")
-                {
-                    thread = new Thread(new ParameterizedThreadStart(Follow));
-                    thread.Start(targ2);
-                }
-                thread = new Thread(new ParameterizedThreadStart(Follow));
-                thread.Start(targ);
-            }
-            #endregion
+            
             #region Calendar
-            if (input == "2")
-            {
-                Console.Clear();
-                Console.WriteLine("Today is " + DateTime.Now.DayOfWeek + ".");
+
+            Console.WriteLine(" ");
+                Console.WriteLine("Today is " + DateTime.Now.DayOfWeek.ToString() + ".");
                 Console.WriteLine(" ");
                 if (File.Exists("config.txt"))
                 {
@@ -86,13 +74,28 @@ namespace v1s1tor
                     Console.WriteLine(" ");
                     string udays = File.ReadAllLines("config.txt")[1].Split(':')[1];
                     Console.WriteLine("Your unfollowing days consist of: " + udays + ".");
-                    Console.ReadLine();
+                   // Console.ReadLine();
+                   // Console.WriteLine(fdays.Split(',')[1]);
+                    foreach (string s in fdays.Split(','))
+                        {
+                        
+                            if(s == DateTime.Now.DayOfWeek.ToString())
+                        {
+                            followday = true;
+                        }
+                        }
+                    Console.WriteLine(" ");
+                    if (followday == true)
+                        Console.WriteLine("Today is a follow day.");
+
+                    if (followday == false)
+                        Console.WriteLine("Today is an unfollow day.");
+                    Console.WriteLine(" ");
+                    
                 }
 
                 if (!File.Exists("config.txt"))
                 {
-                    Console.WriteLine("Today is " + DateTime.Now.DayOfWeek + ".");
-                    Console.WriteLine(" ");
                     Console.WriteLine("It seems you have not used the calendar before.");
                     Console.WriteLine(" ");
                     Console.WriteLine("I will set up your schedule for you, it can be changed any time in config.txt");
@@ -105,17 +108,55 @@ namespace v1s1tor
                     File.WriteAllText("config.txt","F:Monday,Tuesday,Wednesday,Thursday,Sunday\nU:Friday,Saturday");
                     
                 }
-                
-            }
+
+
             #endregion
 
+            string input = Console.ReadLine();
+            Thread thread = new Thread(BsThread);
+            #region StartBot
+            if (input == "1")
+            {
+                if (followday == true)
+                {
+                    if (threadnum == "2")
+                    {
+                        thread = new Thread(new ParameterizedThreadStart(Follow));
+                        thread.Start(targ2);
+                    }
+                    thread = new Thread(new ParameterizedThreadStart(Follow));
+                    thread.Start(targ);
+                }
+                if(followday == false)
+                {
+                    if (threadnum == "2")
+                    {
+                        thread = new Thread(new ParameterizedThreadStart(UnFollow));
+                        thread.Start(targ2);
+                    }
+                    thread = new Thread(new ParameterizedThreadStart(UnFollow));
+                    thread.Start(targ);
+                }
+            }
+            if(input == "2")
+            {
+                
+                Console.Clear();
+                Console.WriteLine("How many threads?");
+                threadnum = Console.ReadLine();
+                Console.Clear();
+                Console.WriteLine("Threads changed to " + threadnum);
+                Thread.Sleep(3000);
+                Menu();
+            }
+            #endregion
         }
 
         #region LoginVoid
         static IWebDriver Login(string username, string password)
         {
             
-            IWebDriver driver = new ChromeDriver(@"C:\Users\qianlong\Downloads", options);
+            IWebDriver driver = new ChromeDriver(@"C:\Users\poseidon\Downloads", options);
             driver.Navigate().GoToUrl("https://www.instagram.com/accounts/login/");
             WaitForPageLoad(driver);
             Thread.Sleep(2000);
@@ -139,7 +180,7 @@ namespace v1s1tor
             }
             Thread.Sleep(1000);
             WaitForPageLoad(driver);
-            Console.WriteLine("Logged in, awaiting phone auth. Once authed, press any key to continue.");
+            Console.WriteLine("\nLogged in, awaiting phone auth. Once authed, press any key to continue.");
             string s = Console.ReadLine();
             Console.WriteLine("\nLogged in to " + username);
             return driver;
@@ -177,17 +218,20 @@ namespace v1s1tor
             }
             Thread.Sleep(6000);
             i = 0;
-            try
-            {
+            
                 while (true)
                 {
+                try
+                {
                     Actions builder = new Actions(driver);
-                    Thread.Sleep(30000);
-                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'sqdOP')]")))
+                    
+                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'HVWg4')]")))
                     {    //HoLwm
-                        if (e.Text == "Follow")
+                        Thread.Sleep(30000);
+                        if (e.FindElement(By.ClassName("sqdOP")).Text == "Follow")
                         {
-                            builder.MoveToElement(e).Click().Perform();
+                            Console.WriteLine("Followed " + e.FindElement(By.ClassName("FPmhX")).Text + ".");
+                            builder.MoveToElement(e.FindElement(By.ClassName("sqdOP"))).Click().Perform();
                             builder.SendKeys(Keys.ArrowDown).Perform();
 
                             break;
@@ -196,17 +240,90 @@ namespace v1s1tor
                         IJavaScriptExecutor js;
                             js = (IJavaScriptExecutor)driver;
                         Thread.Sleep(5000);
-                        js.ExecuteScript("return document.getElementsByClassName('sqdOP').remove();");
+                        //Console.WriteLine("Deleting " + driver.FindElement(By.ClassName("FPmhX").FindElement(By.ClassName("HVWg4").Text);
+                        //js.ExecuteScript("document.getElementsByClassName('HVWg4')[0].remove();");
+                        
                     }
-
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+
             }
-            catch
-            {
-                Console.WriteLine("Completed.");
-            }
+            
 
             
+        }
+        #endregion
+        #region UnFollowVoid
+        static void UnFollow(object user)
+        {
+            string targ1 = (string)user;
+            string us = "null";
+            string pa = "null";
+            if (targ1 == targ2)
+            {
+                us = username2;
+                pa = password2;
+            }
+            if (targ1 == targ)
+            {
+                us = username;
+                pa = password;
+            }
+            IWebDriver driver = Login(us, pa);
+            driver.Navigate().GoToUrl("https://www.instagram.com/" + us + "/");
+            Thread.Sleep(1000);
+            WaitForPageLoad(driver);
+
+            //Y8-fY 
+            int i = 0;
+            foreach (IWebElement e in driver.FindElements(By.ClassName("Y8-fY")))
+            {
+                i++;
+                if (i == 3)
+                    e.Click();
+
+            }
+            Thread.Sleep(6000);
+            i = 0;
+
+            while (true)
+            {
+                try
+                {
+                    Actions builder = new Actions(driver);
+
+                    foreach (IWebElement e in driver.FindElements(By.XPath("//*[contains(@class, 'HVWg4')]")))
+                    {    //HoLwm
+                        if (e.FindElement(By.ClassName("sqdOP")).Text == "Following")
+                        {
+                            Thread.Sleep(10000);
+                            Console.WriteLine("UnFollowed " + e.FindElement(By.ClassName("FPmhX")).Text + ".");
+                            builder.MoveToElement(e.FindElement(By.ClassName("sqdOP"))).Click().Perform();
+                            builder.SendKeys(Keys.ArrowDown).Perform();
+                            Thread.Sleep(4500);
+
+                            builder.MoveToElement(driver.FindElement(By.ClassName("aOOlW"))).Click().Perform();
+                            break;
+
+                        }
+                        Thread.Sleep(500);
+                        //Console.WriteLine("Deleting " + driver.FindElement(By.ClassName("FPmhX").FindElement(By.ClassName("HVWg4").Text);
+                        //js.ExecuteScript("document.getElementsByClassName('HVWg4')[0].remove();");
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+
+            }
+
+
+
         }
         #endregion
         #region Handlers
