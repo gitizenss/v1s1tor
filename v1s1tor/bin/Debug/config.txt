@@ -1,0 +1,2 @@
+F:Sunday,Tuesday,Wednesday,Saturday
+U:Thursday,Friday,Monday
