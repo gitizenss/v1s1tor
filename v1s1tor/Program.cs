@@ -328,7 +328,7 @@ namespace v1s1tor
                     Console.WriteLine(ex.ToString());
                     if (bt > 5)
                     {
-
+                        Thread.Sleep(3000);
                         driver.Dispose();
                         Follow(user);
                     }
@@ -498,6 +498,7 @@ namespace v1s1tor
                 catch (Exception ex)
                 {
                     bt++;
+                    Thread.Sleep(3000);
                     Console.WriteLine(ex.ToString());
                     if (bt > 5)
                     {
